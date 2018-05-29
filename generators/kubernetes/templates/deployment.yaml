@@ -6,12 +6,14 @@ metadata:
     chart: '{{tag ' .Chart.Name '}}-{{tag ' .Chart.Version | replace "+" "_" '}}'
 spec:
   replicas: {{tag ' .Values.replicaCount '}}
+  revisionHistoryLimit: {{tag ' .Values.revisionHistoryLimit '}}
+{{#if helm.strategy}}
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
       maxSurge: 1
-  revisionHistoryLimit: {{tag ' .Values.revisionHistoryLimit '}}
+{{/if}}
   template:
     metadata:
       labels:
@@ -22,14 +24,34 @@ spec:
       - name: "{{tag '  .Chart.Name  '}}"
         image: "{{tag ' .Values.image.repository '}}:{{tag ' .Values.image.tag '}}"
         imagePullPolicy: {{tag ' .Values.image.pullPolicy '}}
+{{tag ' if .Values.istio.enabled '}}
+        # Istio with mTLS fails to reach liveness/readiness endpoints, see:
+        # https://github.com/istio/istio/issues/2628
+        # https://github.com/istio/istio/issues/1194
+{{tag ' else '}}
+{{#if helm.liveness}}
         livenessProbe:
           httpGet:
-            path: /health
+            path: /{{healthEndpoint}}
             port: {{tag ' .Values.service.servicePort '}}
           initialDelaySeconds: {{tag ' .Values.livenessProbe.initialDelaySeconds'}}
           periodSeconds: {{tag ' .Values.livenessProbe.periodSeconds'}}
+{{/if}}
+{{#if helm.readiness}}
+        readinessProbe:
+          httpGet:
+            path: /{{readinessEndpoint}}
+            port: {{tag ' .Values.service.servicePort '}}
+          initialDelaySeconds: 20
+{{/if}}
+{{tag ' end '}}
         ports:
-        - containerPort: {{tag ' .Values.service.servicePort'}}
+        - name: http
+        containerPort: {{tag ' .Values.service.servicePort'}}
+{{#if servicePorts.https}}
+        - name: https
+          containerPort: {{tag ' .Values.service.servicePortHttps '}}
+{{/if}}
         resources:
           requests:
             cpu: "{{tag ' .Values.image.resources.requests.cpu '}}"

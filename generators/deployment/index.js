@@ -20,18 +20,14 @@ const Utils = require('../lib/utils');
 module.exports = class extends Generator {
 	constructor(args, opts) {
 		super(args, opts);
-		if (opts.cloudContext) {
-			this.opts = opts.cloudContext
-			this.opts.libertyVersion = opts.libertyVersion
-		} else {
-			this.opts = opts
-		}
-		if (typeof (opts.bluemix) === 'string') {
-			this.bluemix = JSON.parse(opts.bluemix || '{}');
-		} else if (typeof (opts.bluemix) === 'object') {
-			this.bluemix = opts.bluemix;
-		}
 
+		// opts -> this.options via Yeoman Generator (super)
+
+		if (typeof (this.options.bluemix) === 'string') {
+			this.bluemix = JSON.parse(this.options.bluemix || '{}');
+		} else {
+			this.bluemix = this.options.bluemix;
+		}
 	}
 
 	configuring() {
@@ -68,7 +64,7 @@ module.exports = class extends Generator {
 			this.manifestConfig.name = this.bluemix.name;
 		}
 
-		this.toolchainConfig.repoType = this.opts.repoType || "clone";
+		this.toolchainConfig.repoType = this.options.repoType || "clone";
 		switch (this.bluemix.backendPlatform) {
 			case 'NODE':
 				this._configureNode();
@@ -114,8 +110,8 @@ module.exports = class extends Generator {
 	}
 
 	/***
-	 * Get the highest memory size available 
-	 * 
+	 * Get the highest memory size available
+	 *
 	 * @params manifestMemoryConfig {string} the memory allocaated h
 	 */
 	_getHighestMemorySize(manifestMemoryConfig, userDefinedMinMemory){
@@ -124,7 +120,7 @@ module.exports = class extends Generator {
 		} else if (!manifestMemoryConfig && userDefinedMinMemory) {
 			return userDefinedMinMemory;
 		}
-			
+
 		const memMap = {
 			k: 1,
 			m: 2,
@@ -133,7 +129,7 @@ module.exports = class extends Generator {
 		const manifestSize = manifestMemoryConfig.replace(/[^MmGgKk]/g, '');
 		const userDefinedMinSize = userDefinedMinMemory.replace(/[^MmGgKk]/g, '');
 		let highestAvailableSize;
- 
+
 		if(memMap[manifestSize.toLowerCase()] > memMap[userDefinedMinSize.toLowerCase()]){
 			highestAvailableSize = manifestMemoryConfig;
 		} else if (memMap[manifestSize.toLowerCase()] < memMap[userDefinedMinSize.toLowerCase()]){
@@ -151,7 +147,7 @@ module.exports = class extends Generator {
 	_configureNode() {
 		this.manifestConfig.buildpack = 'sdk-for-nodejs';
 		this.manifestConfig.command = 'npm start';
-		this.manifestConfig.memory = this._getHighestMemorySize(this.manifestConfig.memory, this.opts.nodeCFMinMemory);
+		this.manifestConfig.memory = this._getHighestMemorySize(this.manifestConfig.memory, this.options.nodeCFMinMemory);
 		this.cfIgnoreContent = ['.git/', 'node_modules/', 'test/', 'vcap-local.js'];
 	}
 
@@ -164,21 +160,21 @@ module.exports = class extends Generator {
 	}
 
 	_configureJavaCommon() {
-		if (this.opts.appName) {
-			this.manifestConfig.name = this.opts.appName;
-			this.name = this.opts.appName;
+		if (this.options.appName) {
+			this.manifestConfig.name = this.options.appName;
+			this.name = this.options.appName;
 		}
-		if (this.opts.createType === 'bff/liberty') {
+		if (this.options.createType === 'bff/liberty') {
 			this.manifestConfig.env.OPENAPI_SPEC = `/${this.name}/swagger/api`;
 		}
-		if (this.opts.createType === 'bff/spring') {
+		if (this.options.createType === 'bff/spring') {
 			this.manifestConfig.env.OPENAPI_SPEC = '/swagger/api';
 		}
 
-		if (this.opts.createType && this.opts.createType.startsWith('enable/')) {
+		if (this.options.createType && this.options.createType.startsWith('enable/')) {
 			this.toolchainConfig.repoType = 'link';
 		}
-		let buildCommand = this.opts.buildType === 'maven' ? '      mvn -N io.takari:maven:wrapper -Dmaven=3.5.0\n      ./mvnw install -DskipTests' : '      gradle build';
+		let buildCommand = this.options.buildType === 'maven' ? '      mvn -N io.takari:maven:wrapper -Dmaven=3.5.0\n      ./mvnw install -DskipTests' : '      gradle build';
 		this.pipelineConfig.javaBuildScriptContent = 'export JAVA_HOME=$JAVA8_HOME\n' + buildCommand;
 		this.pipelineConfig.buildJobProps = {
 			build_type: 'shell',
@@ -192,11 +188,13 @@ module.exports = class extends Generator {
 		this.cfIgnoreContent = ['/.classpath', '/.project', '/.settings', '/src/main/liberty/config/server.env', 'target/', 'build/'];
 		this.manifestConfig.buildpack = 'liberty-for-java';
 		this.manifestConfig.memory = this.manifestConfig.memory || '512M';
-		let buildDir = (this.opts.buildType && this.opts.buildType === 'gradle') ? 'build' : 'target';
-		let zipPath = `${buildDir}/${this.opts.artifactId}-${this.opts.version}.zip`
+		let buildDir = (this.options.buildType && this.options.buildType === 'gradle') ? 'build' : 'target';
+		let zipPath = `${buildDir}/${this.options.artifactId}-${this.options.version}.zip`
 		this.manifestConfig.path = `./${zipPath}`;
 		let excludes = [];
-		if (this.opts.libertyVersion === 'beta') {
+
+		if (this.options.libertyVersion === 'beta') {
+			this.options.libertyBeta = true
 			this.manifestConfig.env.IBM_LIBERTY_BETA = 'true'
 			this.manifestConfig.env.JBP_CONFIG_LIBERTY = '\"version: +\"'
 		}
@@ -219,8 +217,8 @@ module.exports = class extends Generator {
 		this.cfIgnoreContent = ['/.classpath', '/.project', '/.settings', '/src/main/resources/application-local.properties', 'target/', 'build/'];
 		this.manifestConfig.buildpack = 'java_buildpack';
 		this.manifestConfig.memory = this.manifestConfig.memory || '256M';
-		let buildDir = (this.opts.buildType && this.opts.buildType === 'gradle') ? 'build/libs' : 'target';
-		let jarPath = `${buildDir}/${this.opts.artifactId}-${this.opts.version}.jar`;
+		let buildDir = (this.options.buildType && this.options.buildType === 'gradle') ? 'build/libs' : 'target';
+		let jarPath = `${buildDir}/${this.options.artifactId}-${this.options.version}.jar`;
 		this.manifestConfig.path = `./${jarPath}`;
 		this.pipelineConfig.pushCommand = 'cf push "${CF_APP}" -p ' + jarPath;
 	}
@@ -228,7 +226,7 @@ module.exports = class extends Generator {
 	_configurePython() {
 		// buildpack is left blank; bluemix will auto detect
 		this.manifestConfig.buildpack = 'python_buildpack';
-		this.manifestConfig.command = this.opts.enable ?
+		this.manifestConfig.command = this.options.enable ?
 			'echo No run command specified in manifest.yml' :
 			'python manage.py start 0.0.0.0:$PORT';
 		this.manifestConfig.memory = this.manifestConfig.memory || '128M';
@@ -240,7 +238,7 @@ module.exports = class extends Generator {
 	_configureDjango() {
 		// buildpack is left blank; bluemix will auto detect
 		this.manifestConfig.buildpack = 'python_buildpack';
-		this.manifestConfig.command = this.opts.enable ?
+		this.manifestConfig.command = this.options.enable ?
 			'echo No run command specified in manifest.yml' :
 			`gunicorn --env DJANGO_SETTINGS_MODULE=${this.bluemix.name}.settings.production ${this.bluemix.name}.wsgi -b 0.0.0.0:$PORT`;
 		this.manifestConfig.memory = this.manifestConfig.memory || '128M';
@@ -258,7 +256,7 @@ module.exports = class extends Generator {
 
 	writing() {
 		//skip writing files if platforms is specified via options and it doesn't include bluemix
-		if (this.opts.platforms && !this.opts.platforms.includes('bluemix')) {
+		if (this.options.platforms && !this.options.platforms.includes('bluemix')) {
 			return;
 		}
 		// write manifest.yml file

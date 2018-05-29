@@ -25,33 +25,30 @@ module.exports = class extends Generator {
 	constructor(args, opts) {
 		super(args, opts);
 
+		// opts -> this.options via Yeoman Generator (super)
+
+		// fetch additional options, convert string options to JSON objects
 		this._sanitizeOption(this.options, OPTION_BLUEMIX);
 		this._sanitizeOption(this.options, OPTION_STARTER);
 
-		this.opts = opts;
-
-		if (this.options.libertyVersion === 'beta') {
-			this.options.libertyBeta = true
-		}
-
-		this.shouldPrompt = this.opts.bluemix ? false : true;
+		this.shouldPrompt = this.options.bluemix ? false : true;
 
 		/*
-		Yeoman copies the opts when doing compose with so create own object reference 
+		Yeoman copies the opts when doing compose with so create own object reference
 		that can be updated in prompting
 		*/
-		if (this.opts.bluemix) {
-			this.bluemix = this.opts.bluemix;
+		if (this.options.bluemix) {
+			this.bluemix = this.options.bluemix;
 		} else {
 			this.bluemix = {};
-			this.opts.bluemix = this.bluemix;
+			this.options.bluemix = this.bluemix;
 		}
 	}
 
 	initializing() {
-		this.composeWith(require.resolve('../dockertools'), this.opts);
-		this.composeWith(require.resolve('../kubernetes'), this.opts);
-		this.composeWith(require.resolve('../deployment'), this.opts);
+		this.composeWith(require.resolve('../dockertools'), this.options);
+		this.composeWith(require.resolve('../kubernetes'), this.options);
+		this.composeWith(require.resolve('../deployment'), this.options);
 	}
 
 	prompting() {

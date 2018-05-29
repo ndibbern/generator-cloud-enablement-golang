@@ -232,40 +232,6 @@ describe('cloud-enablement:kubernetes', function () {
 				assertYmlContent(basedeploymentyml.spec.template.metadata.labels.version, 'base', 'basedeploymentyml.spec.template.metadata.labels.version');
 			});
 
-			it('has manifests/kube.deploy.yml with correct content', function () {
-				if (language === 'JAVA' || language === 'SPRING') {
-					assert.file('manifests/kube.deploy.yml');
-					let i = 0;
-					yml.safeLoadAll(fs.readFileSync('manifests/kube.deploy.yml', 'utf8'), data => {
-						switch (i) {
-							case 0:
-								assertYmlContent(data.metadata.name, applicationName.toLowerCase() + '-service', 'doc0.data.metadata.name');
-								if (language === 'JAVA') {
-									assertYmlContent(data.spec.ports[0].port, 9080, 'doc0.spec.ports[0].port');
-									assertYmlContent(data.spec.ports[1].port, 9443, 'doc0.spec.ports[1].port');
-								}
-								if (language === 'SPRING') {
-									assertYmlContent(data.spec.ports[0].port, 8080, 'doc0.spec.ports[0].port');
-								}
-								i++;
-								break;
-							case 1:
-								assertYmlContent(data.metadata.name, applicationName.toLowerCase() + '-deployment', 'doc1.metadata.name');
-								if (language === 'JAVA') {
-									assertYmlContent(data.spec.template.spec.containers[0].readinessProbe.httpGet.path, '/' + applicationName + '/health', 'doc1.spec.template.spec.containers[0].readinessProbe.httpGet.path');
-								}
-								if (language === 'SPRING') {
-									assertYmlContent(data.spec.template.spec.containers[0].readinessProbe.httpGet.path, '/health', 'doc1.data.spec.template.spec.containers[0].readinessProbe.httpGet.path');
-								}
-								i++;
-								break;
-							default:
-								assert.fail(i, 'i < 2', 'Yaml file contains more documents than expected');
-						}
-					});
-					assert.strictEqual(i, 2, 'Expected to find exactly 2 documents, instead found ' + i);
-				}
-			});
 			if (language === 'JAVA' || language === 'NODE' || language == 'SPRING') {
 				it('Java, Node and Spring have Jenkinsfile with correct content', function () {
 					assert.fileContent('Jenkinsfile', 'image = \'' + applicationName.toLowerCase() + '\'');
@@ -274,31 +240,6 @@ describe('cloud-enablement:kubernetes', function () {
 		});
 	});
 
-	describe('kubernetes:app with Java project and custom health endpoint', function () {
-		beforeEach(function () {
-			return helpers.run(path.join(__dirname, '../generators/app'))
-				.inDir(path.join(__dirname, './tmp'))
-				.withOptions({bluemix: JSON.stringify(scaffolderSampleSpring), healthEndpoint: 'customHealth'})
-		});
-		it('has manifests/kube.deploy.yml with correct content', function () {
-			assert.file('manifests/kube.deploy.yml');
-			let i = 0;
-			yml.safeLoadAll(fs.readFileSync('manifests/kube.deploy.yml', 'utf8'), data => {
-				switch (i) {
-					case 0:
-						i++;
-						break;
-					case 1:
-						assertYmlContent(data.spec.template.spec.containers[0].readinessProbe.httpGet.path, '/customHealth', 'doc1.data.spec.template.spec.containers[0].readinessProbe.httpGet.path');
-						i++;
-						break;
-					default:
-						assert.fail(i, 'i < 2', 'Yaml file contains more documents than expected');
-				}
-			});
-			assert.strictEqual(i, 2, 'Expected to find exactly 2 documents, instead found ' + i);
-		});
-	});
 
 	describe('kubernetes:app with Java-liberty project and NO platforms specified', function () {
 
@@ -317,8 +258,6 @@ describe('cloud-enablement:kubernetes', function () {
 			assert.noFile(chartLocation + '/values.yaml');
 			assert.noFile(chartLocation + '/Chart.yaml');
 			assert.noFile('Jenkinsfile');
-			assert.noFile('manifests/kube.deploy.yml');
-
 		});
 	});
 
@@ -340,8 +279,6 @@ describe('cloud-enablement:kubernetes', function () {
 			assert.file(chartLocation + '/values.yaml');
 			assert.file(chartLocation + '/Chart.yaml');
 			assert.file('Jenkinsfile');
-			assert.file('manifests/kube.deploy.yml');
-
 		});
 	});
 
@@ -379,7 +316,7 @@ describe('cloud-enablement:kubernetes', function () {
 
 	});
 
-	describe('kubernetes:app with Java project and mongo deployment with opts as a string', function () {
+	describe('kubernetes:app with Java project and mongo deployment with options as a string', function () {
 		beforeEach(function () {
 			return helpers.run(path.join(__dirname, '../generators/app'))
 				.inDir(path.join(__dirname, './tmp'))
@@ -438,7 +375,7 @@ describe('cloud-enablement:kubernetes', function () {
 
 	});
 
-	describe('kubernetes:app with Node project and mongo deployment with opts as a string', function () {
+	describe('kubernetes:app with Node project and mongo deployment with options as a string', function () {
 
 		beforeEach(function () {
 			return helpers.run(path.join(__dirname, '../generators/app'))
@@ -497,7 +434,7 @@ describe('cloud-enablement:kubernetes', function () {
 
 	});
 
-	describe('kubernetes:app with Swift project and mongo deployment with opts as a string', function () {
+	describe('kubernetes:app with Swift project and mongo deployment with options as a string', function () {
 
 		beforeEach(function () {
 			return helpers.run(path.join(__dirname, '../generators/app'))
@@ -547,7 +484,7 @@ describe('cloud-enablement:kubernetes', function () {
 
 	});
 
-	describe('kubernetes:app with Python project and mongo deployment with opts as a string', function () {
+	describe('kubernetes:app with Python project and mongo deployment with options as a string', function () {
 
 		beforeEach(function () {
 			return helpers.run(path.join(__dirname, '../generators/app'))

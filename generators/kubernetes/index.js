@@ -54,16 +54,18 @@ module.exports = class extends Generator {
 	constructor(args, opts) {
 		super(args, opts);
 
-		if (typeof (opts.bluemix) === 'string') {
-			this.bluemix = JSON.parse(opts.bluemix || '{}');
+		// opts -> this.options via Yeoman Generator (super)
+
+		if (typeof (this.options.bluemix) === 'string') {
+			this.bluemix = JSON.parse(this.options.bluemix || '{}');
 		} else {
-			this.bluemix = opts.bluemix;
+			this.bluemix = this.options.bluemix;
 		}
 
-		if(typeof (opts) === 'string'){
-			this.opts = JSON.parse(opts || '{}');
+		if (typeof(this.options.services) === 'string') {
+			this.options.services  = JSON.parse(this.options.services || '[]');
 		} else {
-			this.opts = opts.cloudContext || opts;
+			this.options.services = this.options.services || [];
 		}
 	}
 
@@ -72,7 +74,7 @@ module.exports = class extends Generator {
 		this.fileLocations = {
 			chart: {source : 'Chart.yaml', target : 'chartDir/Chart.yaml', process: true},
 			deployment: {source : 'deployment.yaml', target : 'chartDir/templates/deployment.yaml', process: true},
-			service: {source : 'service.yaml', target : 'chartDir/templates/service.yaml', process: false},
+			service: {source : 'service.yaml', target : 'chartDir/templates/service.yaml', process: true},
 			hpa: {source : 'hpa.yaml', target : 'chartDir/templates/hpa.yaml', process: true},
 			istio: {source : 'istio.yaml', target : 'chartDir/templates/istio.yaml', process: true},
 			basedeployment: {source : 'basedeployment.yaml', target : 'chartDir/templates/basedeployment.yaml', process: true},
@@ -83,35 +85,60 @@ module.exports = class extends Generator {
 
 	configuring() {
 		// work out app name and language
-		this.opts.language = _.toLower(this.bluemix.backendPlatform);
-		if(this.opts.language === 'java' || this.opts.language === 'spring') {
-			this.opts.applicationName = this.opts.appName || Utils.sanitizeAlphaNum(this.bluemix.name);
-		} else {
-			this.opts.applicationName = Utils.sanitizeAlphaNum(this.bluemix.name);
-		}
+		this.options.language = _.toLower(this.bluemix.backendPlatform);
 
-		this.opts.chartName = Utils.sanitizeAlphaNumLowerCase(this.opts.applicationName);
+		this.options.helm = {
+			prometheus: true,
+			istio: false,
+			strategy: true,
+			liveness: true,
+			readiness: false
+		};
 
-		this.opts.services = typeof(this.opts.services) === 'string' ? JSON.parse(this.opts.services || '[]') : this.opts.services;
+		this.options.healthEndpoint = this.options.healthEndpoint | 'health';
 
-		this.opts.servicePorts = {};
-		//use port if passed in
-		if(this.opts.port) {
-			this.opts.servicePorts.http = this.opts.port;
-		} else {
-			this.opts.servicePorts.http = portDefault[this.opts.language].http;
-			if(portDefault[this.opts.language].https) {
-				this.opts.servicePorts.https = portDefault[this.opts.language].https;
+		if(this.options.language === 'java' || this.options.language === 'spring') {
+			this.options.applicationName = this.options.appName || Utils.sanitizeAlphaNum(this.bluemix.name);
+
+			this.options.helm.prometheus = false;
+			this.options.helm.istio = true;
+			this.options.helm.strategy = false;
+			this.options.helm.liveness = false;
+			this.options.helm.readiness = true;
+
+			this.options.readinessEndpoint = `${this.options.helm.healthEndpoint}`;
+			if ( this.options.language === 'java' &&  this.options.useContextRoot ) {
+				this.options.readinessEndpoint = `${this.options.applicationName}${this.options.helm.readinessEndpoint}`
 			}
+		} else {
+			this.options.applicationName = Utils.sanitizeAlphaNum(this.bluemix.name);
 		}
 
-		this.opts.repositoryURL='';
+		this.options.chartName = Utils.sanitizeAlphaNumLowerCase(this.options.applicationName);
+
+		this.options.servicePorts = {};
+
+		//use port if passed in
+		if(this.options.port) {
+			this.options.servicePorts.http = this.options.port;
+		} else {
+			this.options.servicePorts.http = portDefault[this.options.language].http;
+		}
+
+		//use https port if passed in
+		if(this.options.httpsPort) {
+			this.options.servicePorts.http = this.options.httpsPort;
+		} else if(portDefault[this.options.language].https) {
+			this.options.servicePorts.https = portDefault[this.options.language].https;
+		}
+
+		this.options.repositoryURL='';
 		if (this.bluemix.server) {
 			const registryNamespace = this.bluemix.server.cloudDeploymentOptions && this.bluemix.server.cloudDeploymentOptions.imageRegistryNamespace ?
 				this.bluemix.server.cloudDeploymentOptions.imageRegistryNamespace : 'replace-me-namespace';
 			const domain = this.bluemix.server.domain ? this.bluemix.server.domain : 'ng.bluemix.net';
-			this.opts.repositoryURL= `registry.${domain}/${registryNamespace}/`;
-			this.opts.kubeClusterNamespace =
+			this.options.repositoryURL= `registry.${domain}/${registryNamespace}/`;
+			this.options.kubeClusterNamespace =
 				this.bluemix.server.cloudDeploymentOptions && this.bluemix.server.cloudDeploymentOptions.kubeClusterNamespace ?
 					this.bluemix.server.cloudDeploymentOptions.kubeClusterNamespace : 'default';
 		} else {
@@ -119,53 +146,46 @@ module.exports = class extends Generator {
 
 			// if --bluemix specified and dockerRegistry is not
 			if (this.bluemix.dockerRegistry === undefined) {
-				this.opts.repositoryURL= 'registry.ng.bluemix.net/replace-me-namespace/';
+				this.options.repositoryURL= 'registry.ng.bluemix.net/replace-me-namespace/';
 			}
 			else {
 				// dockerRegistry was passed in --bluemix or was
 				// set via prompt response
-				this.opts.repositoryURL = this.bluemix.dockerRegistry + '/';
+				this.options.repositoryURL = this.bluemix.dockerRegistry + '/';
 			}
 		}
 	}
 
 	writing() {
 		//skip writing files if platforms is specified via options and it doesn't include kube
-		if(this.opts.platforms && !this.opts.platforms.includes('kube')) {
+		if(this.options.platforms && !this.options.platforms.includes('kube')) {
 			return;
 		}
+
 		// setup output directory name for helm chart
 		// chart/<applicationName>/...
-		let chartDir = 'chart/' + this.opts.chartName;
+		let chartDir = 'chart/' + this.options.chartName;
 
-		// Tested this works OK with Microservice Builder
-		if (this.opts.language === 'node') {
+		// Jenkinsfile used also by Microclimate
+
+		if (this.options.language === 'node') {
 			this.fileLocations.jenkinsfile = {
 				source : 'node/Jenkinsfile',
 				target : 'Jenkinsfile',
 				process : true
 			}
 		}
-		
-		// Tested this works OK with Microservice Builder/Microclimate as well
-		if (this.opts.language === 'swift') {
+
+		if (this.options.language === 'swift') {
 			this.fileLocations.jenkinsfile = {
 				source : 'swift/Jenkinsfile',
 				target : 'Jenkinsfile',
 				process : true
 			}
 		}
-		else if (this.opts.language === 'java' || this.opts.language === 'spring') {
-			this.fileLocations.deployment.source = 'java/deployment.yaml';
-			this.fileLocations.basedeployment.source = 'java/basedeployment.yaml';
-			this.fileLocations.service.source = 'java/service.yaml';
-			this.fileLocations.service.process = true;
+
+		if (this.options.language === 'java' || this.options.language === 'spring') {
 			this.fileLocations.values.source = 'java/values.yaml';
-			this.fileLocations.kubedeploy = {
-				source : 'java/manifests/kube.deploy.yml',
-				target : 'manifests/kube.deploy.yml',
-				process : true
-			};
 			this.fileLocations.jenkinsfile = {
 				source : 'java/Jenkinsfile',
 				target : 'Jenkinsfile',
@@ -182,7 +202,7 @@ module.exports = class extends Generator {
 				target = chartDir + target.slice('chartDir'.length);
 			}
 			if(this.fileLocations[file].process) {
-				this._writeHandlebarsFile(source, target, this.opts);
+				this._writeHandlebarsFile(source, target, this.options);
 			} else {
 				this.fs.copy(
 					this.templatePath(source),
@@ -191,8 +211,8 @@ module.exports = class extends Generator {
 			}
 		});
 
-		if(this.opts.services){
-			this.opts.services.forEach(service => {
+		if(this.options.services){
+			this.options.services.forEach(service => {
 				const uniqueServiceSuffix = `${service}-${Utils.createUniqueName(this.bluemix.name)}`;
 				if(_.includes(supportingServicesTypes, service)){
 					this.fs.copyTpl(

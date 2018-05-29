@@ -10,13 +10,18 @@ image:
     requests:
       cpu: 200m
       memory: 300Mi
+{{#if helm.liveness}}
 livenessProbe:
   initialDelaySeconds: 3000
   periodSeconds: 1000
+{{/if}}
 service:
   name: Node
   type: NodePort
   servicePort: {{servicePorts.http}}
+{{#if servicePorts.https}}
+  servicePortHttps: {{servicePorts.https}}
+{{/if}}
 hpa:
   enabled: false
   minReplicas: 1

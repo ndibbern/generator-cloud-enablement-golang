@@ -97,8 +97,8 @@ stages:
       {{#has deployment.type 'CF'}}
       organization: ${CF_ORGANIZATION}
       space: ${CF_SPACE}
-      {{/has}}
       application: ${CF_APP}
+      {{/has}}
     {{#has deployment.type 'Kube'}}
       api_key: ${API_KEY}
       kubernetes_cluster: ${KUBE_CLUSTER_NAME}

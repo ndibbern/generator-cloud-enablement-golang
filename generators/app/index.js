@@ -37,7 +37,7 @@ module.exports = class extends Generator {
 		this.shouldPrompt = this.opts.bluemix ? false : true;
 
 		/*
-		Yeoman copies the opts when doing compose with so create own object reference 
+		Yeoman copies the opts when doing compose with so create own object reference
 		that can be updated in prompting
 		*/
 		if (this.opts.bluemix) {
@@ -74,7 +74,8 @@ module.exports = class extends Generator {
 				'SPRING',
 				'NODE',
 				'PYTHON',
-				'SWIFT'
+				'SWIFT',
+				'GO'
 			]
 		});
 		prompts.push({

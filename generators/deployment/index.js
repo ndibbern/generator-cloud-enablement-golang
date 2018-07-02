@@ -90,6 +90,10 @@ module.exports = class extends Generator {
 			case 'DJANGO':
 				this._configureDjango();
 				break;
+
+			case 'GO':
+				this._configureGo();
+				break;
 			default:
 				throw new Error(`Language ${this.bluemix.backendPlatform} was not one of the valid languages: NODE, SWIFT, JAVA, SPRING, DJANGO or PYTHON`);
 		}
@@ -114,8 +118,8 @@ module.exports = class extends Generator {
 	}
 
 	/***
-	 * Get the highest memory size available 
-	 * 
+	 * Get the highest memory size available
+	 *
 	 * @params manifestMemoryConfig {string} the memory allocaated h
 	 */
 	_getHighestMemorySize(manifestMemoryConfig, userDefinedMinMemory){
@@ -124,7 +128,7 @@ module.exports = class extends Generator {
 		} else if (!manifestMemoryConfig && userDefinedMinMemory) {
 			return userDefinedMinMemory;
 		}
-			
+
 		const memMap = {
 			k: 1,
 			m: 2,
@@ -133,7 +137,7 @@ module.exports = class extends Generator {
 		const manifestSize = manifestMemoryConfig.replace(/[^MmGgKk]/g, '');
 		const userDefinedMinSize = userDefinedMinMemory.replace(/[^MmGgKk]/g, '');
 		let highestAvailableSize;
- 
+
 		if(memMap[manifestSize.toLowerCase()] > memMap[userDefinedMinSize.toLowerCase()]){
 			highestAvailableSize = manifestMemoryConfig;
 		} else if (memMap[manifestSize.toLowerCase()] < memMap[userDefinedMinSize.toLowerCase()]){
@@ -153,6 +157,16 @@ module.exports = class extends Generator {
 		this.manifestConfig.command = 'npm start';
 		this.manifestConfig.memory = this._getHighestMemorySize(this.manifestConfig.memory, this.opts.nodeCFMinMemory);
 		this.cfIgnoreContent = ['.git/', 'node_modules/', 'test/', 'vcap-local.js'];
+	}
+
+	_configureGo() {
+		// buildpack is left blank; bluemix will auto detect
+		this.manifestConfig.buildpack = 'go_buildpack';
+		this.manifestConfig.command = undefined;
+		this.manifestConfig.memory = this.manifestConfig.memory || '128M';
+		this.manifestConfig.env.GOPACKAGENAME = this.bluemix.name;
+		this.manifestConfig.env.GOVERSION = 'go1.8.3';
+		this.cfIgnoreContent = ['.git/', 'test/', 'vcap-local.js'];
 	}
 
 	_configureSwift() {

@@ -1,34 +1,23 @@
-FROM golang:1.8.1-alpine
+FROM golang:1.10.3-alpine
 
 # Update packages and install dependency packages for services
-RUN apk update && apk add --no-cache bash git
-RUN apt-get update \
-<% for (var index = 0; index < servicesPackages.length; index++) { -%>
- && apt-get install -y <%- servicesPackages[index] %> \
-<% } -%>
- && apt-get dist-upgrade -y \
- && apt-get clean \
- && echo 'Finished installing dependencies'
-
-# Set up src directory
-ENV SRC_DIR = /go/src/app
+RUN apk update && apk add --no-cache bash git tree
 
 # Change working directory
-WORKDIR $SRC_DIR
+WORKDIR $GOPATH/src/<%= applicationName %>/
+COPY . ./
 
-# Copy app files
-COPY . $SRC_DIR
-
-# Install dependencies (Go dep)
+# Install dependencies
 RUN go get -u github.com/golang/dep/...
-RUN go get -u github.com/derekparker/delve/cmd/dlv
-RUN cd $SRC_DIR
+RUN go get -u github.com/derekparker/delve/cmd/dlv/...
 RUN dep ensure
 
-# # Build App
-# RUN CGO_ENABLED=0 go build
+# Bundle app source
+COPY run-dev $GOPATH/bin
+RUN chmod 777 $GOPATH/bin/run-dev
+RUN chmod 777 $GOPATH/src/<%= applicationName %>/
 
 ENV PORT <%= port %>
 EXPOSE <%= port %>
-# CMD ${SRC_DIR}testing-docker
-# CMD ["go", "run", "server.go"]
+
+CMD ["go", "run", "server.go"]

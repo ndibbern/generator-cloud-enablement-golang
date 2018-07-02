@@ -1,5 +1,5 @@
 /*
- Copyright 2017 IBM Corp.
+ Copyright 2018 IBM Corp.
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -46,7 +46,8 @@ module.exports = class extends Generator {
 		};
 		this.deployment = {
 			type: 'CF',
-			name: this.bluemix.name
+			name: this.bluemix.name,
+			language: this.bluemix.backendPlatform
 		};
 
 		this.name = undefined;
@@ -302,10 +303,21 @@ module.exports = class extends Generator {
 			deployment: this.deployment
 		});
 
-		this._writeHandlebarsFile('pipeline_master.yml', '.bluemix/pipeline.yml', {
-			config: this.pipelineConfig,
-			deployment: this.deployment
-		});
+		if (Utils.sanitizeAlphaNumLowerCase(this.deployment.type) === "vsi") {
+			this._writeHandlebarsFile('vsi_pipeline_master.yml', '.bluemix/pipeline.yml', {
+				config: this.pipelineConfig,
+				name: this.name,
+				lowercaseName: Utils.sanitizeAlphaNumLowerCase(this.name),
+				deployment: this.deployment
+			});
+		}
+		else {
+			this._writeHandlebarsFile('pipeline_master.yml', '.bluemix/pipeline.yml', {
+				config: this.pipelineConfig,
+				deployment: this.deployment
+			});
+		}
+
 	}
 
 	_writeHandlebarsFile(templateFile, destinationFile, data) {

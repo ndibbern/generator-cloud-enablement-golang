@@ -652,8 +652,8 @@ module.exports = class extends Generator {
 		const applicationName = Utils.sanitizeAlphaNum(this.bluemix.name);
 		const dockerFileRun = this.opts.services.length > 0 ? 'docker-compose.yml' : 'Dockerfile';
 		const dockerFileTools = this.opts.services.length > 0 ? 'docker-compose-tools.yml' : 'Dockerfile-tools';
-		const port = this.opts.port ? this.opts.port : '3000';
-		const debugPort = '9229';
+		const port = this.opts.port ? this.opts.port : '8080';
+		const debugPort = '8181';
 
 		// Define metadata for all services that
 		// require custom logic in Dockerfiles

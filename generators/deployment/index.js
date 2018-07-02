@@ -162,11 +162,10 @@ module.exports = class extends Generator {
 
 	_configureGo() {
 		// buildpack is left blank; bluemix will auto detect
-		this.manifestConfig.buildpack = 'go_buildpack';
+		this.manifestConfig.buildpack = 'https://github.com/cloudfoundry/go-buildpack.git';
 		this.manifestConfig.command = undefined;
 		this.manifestConfig.memory = this.manifestConfig.memory || '128M';
 		this.manifestConfig.env.GOPACKAGENAME = this.bluemix.name;
-		this.manifestConfig.env.GOVERSION = 'go1.8.3';
 		this.cfIgnoreContent = ['.git/', 'test/', 'vcap-local.js'];
 	}
 

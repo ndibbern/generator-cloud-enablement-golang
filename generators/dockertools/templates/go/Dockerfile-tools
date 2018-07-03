@@ -5,6 +5,10 @@ RUN apk update && apk add --no-cache bash git tree
 
 EXPOSE <%= port %>
 EXPOSE <%= debugPort %>
+
+# Disables C compilation
+ENV CGO_ENABLED=0
+
 # Change working directory
 WORKDIR $GOPATH/src/<%= applicationName %>/
 COPY . ./

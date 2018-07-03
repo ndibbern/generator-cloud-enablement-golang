@@ -707,7 +707,7 @@ module.exports = class extends Generator {
 			imageNameRun: `${applicationName.toLowerCase()}-go-run`,
 			imageNameTools: `${applicationName.toLowerCase()}-go-tools`,
 			buildCmdRun: 'go build',
-			testCmd: 'go test',
+			testCmd: 'go test ./...',
 			buildCmdDebug: 'go build',
 			runCmd: '',
 			stopCmd: '',

@@ -1,13 +1,13 @@
 version: '2'
 services:
   web:
-    build:
+    build: 
       context: .
       dockerfile: Dockerfile
     image: "<%= image %>"
     container_name: "<%= containerName %>"
     ports: <% ports.forEach(port => { %>
-        - "<%= port %>:<%= port %>"<% }); if(images.length > 0){ %>
+      - "<%= port %>:<%= port %>"<% }); if(images.length > 0){ %>
     links: <% images.forEach(image => { %>
       - <%= image %><% });} %>
     environment: <% envs.forEach(env => { for(key in env){ %>

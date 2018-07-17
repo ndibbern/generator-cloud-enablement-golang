@@ -666,6 +666,7 @@ module.exports = class extends Generator {
 		const serviceImageNames = [];
 		const servicePorts = [];
 
+		// TODO: Figure out what this does
 		// Iterate over service keys to search for provisioned services and their environments
 		for (let index in servKeys) {
 			const servKey = servKeys[index];
@@ -676,8 +677,8 @@ module.exports = class extends Generator {
 			}
 		}
 
-          // Iterate over services key deployed under docker images
-          // Retrieve envs, port and images names if availables for each services
+        // Iterate over services key deployed under docker images
+        // Retrieve envs, port and images names if availables for each services
 		for (let index = 0; index < this.opts.services.length; index++){
 			const servKey = this.opts.services[index];
 			if(services[servKey].hasOwnProperty('envs')){

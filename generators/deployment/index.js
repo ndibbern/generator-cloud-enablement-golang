@@ -91,7 +91,6 @@ module.exports = class extends Generator {
 			case 'DJANGO':
 				this._configureDjango();
 				break;
-
 			case 'GO':
 				this._configureGo();
 				break;
@@ -101,7 +100,6 @@ module.exports = class extends Generator {
 		if (this.manifestConfig && this.manifestConfig.ignorePaths) {
 			this.cfIgnoreContent = this.cfIgnoreContent.concat(this.manifestConfig.ignorePaths);
 		}
-
 
 		this.pipelineConfig.postBuildScript = this.fs.read(this.templatePath('post_build.txt'));
 
@@ -115,7 +113,6 @@ module.exports = class extends Generator {
 					this.pipelineConfig.postBuildScript
 			});
 		}
-
 	}
 
 	/***
@@ -161,12 +158,11 @@ module.exports = class extends Generator {
 	}
 
 	_configureGo() {
-		// buildpack is left blank; bluemix will auto detect
 		this.manifestConfig.buildpack = 'https://github.com/cloudfoundry/go-buildpack.git';
 		this.manifestConfig.command = undefined;
 		this.manifestConfig.memory = this.manifestConfig.memory || '128M';
 		this.manifestConfig.env.GOPACKAGENAME = this.bluemix.name;
-		this.cfIgnoreContent = ['.git/', 'test/', 'vcap-local.js'];
+		this.cfIgnoreContent = ['.git/', 'test/', 'vendor/'];
 	}
 
 	_configureSwift() {

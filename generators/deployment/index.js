@@ -95,7 +95,7 @@ module.exports = class extends Generator {
 				this._configureGo();
 				break;
 			default:
-				throw new Error(`Language ${this.bluemix.backendPlatform} was not one of the valid languages: NODE, SWIFT, JAVA, SPRING, DJANGO or PYTHON`);
+				throw new Error(`Language ${this.bluemix.backendPlatform} was not one of the valid languages: NODE, SWIFT, JAVA, SPRING, DJANGO, PYTHON, or GO`);
 		}
 		if (this.manifestConfig && this.manifestConfig.ignorePaths) {
 			this.cfIgnoreContent = this.cfIgnoreContent.concat(this.manifestConfig.ignorePaths);
@@ -158,6 +158,8 @@ module.exports = class extends Generator {
 	}
 
 	_configureGo() {
+		// TODO: add version for the Go buildpack
+		// Need a direct github link becasue go_buildpack doesn't have dep support
 		this.manifestConfig.buildpack = 'https://github.com/cloudfoundry/go-buildpack.git';
 		this.manifestConfig.command = undefined;
 		this.manifestConfig.memory = this.manifestConfig.memory || '128M';

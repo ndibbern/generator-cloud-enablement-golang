@@ -693,18 +693,17 @@ module.exports = class extends Generator {
 			}
 		}
 
-
 		const cliConfig = {
 			containerNameRun: `${applicationName.toLowerCase()}-go-run`,
 			containerNameTools: `${applicationName.toLowerCase()}-go-tools`,
 			hostPathRun: '.',
 			hostPathTools: '.',
-			containerPathRun: `/go/src/${applicationName.toLowerCase()}; ls`,
-			containerPathTools: `/go/src/${applicationName.toLowerCase()}; ls`,
+			containerPathRun: `/go/src/${applicationName.toLowerCase()}; :`,
+			containerPathTools: `/go/src/${applicationName.toLowerCase()}; :`,
 			containerPortMap: `${port}:${port}`,
 			containerPortMapDebug: `${debugPort}:${debugPort}`,
-			dockerFileRun: "Dockerfile",
-			dockerFileTools: "Dockerfile-tools",
+			dockerFileRun,
+			dockerFileTools,
 			imageNameRun: `${applicationName.toLowerCase()}-go-run`,
 			imageNameTools: `${applicationName.toLowerCase()}-go-tools`,
 			buildCmdRun: 'go build',

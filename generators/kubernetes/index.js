@@ -48,7 +48,7 @@ const portDefault = {
 		http: '3000'
 	},
 	go: {
-		http: '3000'
+		http: '8080'
 	}
 }
 

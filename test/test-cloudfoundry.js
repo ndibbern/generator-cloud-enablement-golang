@@ -29,6 +29,7 @@ const scaffolderSampleSpring = scaffolderSample.getJson('SPRING');
 const scaffolderSampleJavaNoServices = scaffolderSample.getJsonNoServices('JAVA');
 const scaffolderSamplePython = scaffolderSample.getJson('PYTHON');
 const scaffolderSampleDjango = scaffolderSample.getJson('DJANGO');
+const scaffolderSampleGo = scaffolderSample.getJson('GO');
 
 describe('cloud-enablement:cloudfoundry', function () {
 	this.timeout(5000);
@@ -92,6 +93,25 @@ describe('cloud-enablement:cloudfoundry', function () {
 			return helpers.run(path.join(__dirname, '../generators/app'))
 				.inDir(path.join(__dirname, './tmp'))
 				.withOptions({bluemix: JSON.stringify(scaffolderSampleNode)});
+		});
+
+		it('manifest.yml has memory', function () {
+			assert.file('manifest.yml');
+			assert.fileContent('manifest.yml', 'memory: 1024M');
+		});
+
+		it('toolchain.yml repo type is clone', function () {
+			assert.file('.bluemix/toolchain.yml');
+			assert.fileContent('.bluemix/toolchain.yml', 'type: clone');
+		});
+
+	});
+
+	describe('cloud-enablement:cloudfoundry with Go', function () {
+		beforeEach(function () {
+			return helpers.run(path.join(__dirname, '../generators/app'))
+				.inDir(path.join(__dirname, './tmp'))
+				.withOptions({bluemix: JSON.stringify(scaffolderSampleGo)});
 		});
 
 		it('manifest.yml has memory', function () {

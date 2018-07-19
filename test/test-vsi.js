@@ -1,5 +1,5 @@
 /*
- Copyright 2018 IBM Corp.
+ © Copyright IBM Corp. 2017, 2018
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -282,10 +282,10 @@ describe('cloud-enablement:vsi', function () {
 		});
 
 		it('should have correct file content', function () {
-			assert.fileContent('debian/install', '.build/debug/appname');
+			assert.fileContent('debian/install', '.build/');
 			assert.fileContent('terraform/scripts/start.sh', './appname');
 			assert.fileContent('terraform/scripts/build.sh', 'swift build');
-			assert.fileContent('terraform/scripts/install.sh', 'apt-get install libatomic1 libpython2.7');
+			assert.fileContent('terraform/scripts/install.sh', 'apt-get install -y libatomic1 libpython2.7');
 			assert.fileContent('terraform/scripts/install.sh', 'tar -xzf swift-4.1.2-RELEASE-ubuntu14.04.tar.gz');
 			assert.fileContent('debian/control', 'appname');
 		});

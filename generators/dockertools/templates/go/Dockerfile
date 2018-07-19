@@ -8,8 +8,8 @@ WORKDIR $GOPATH/src/<%= applicationName %>/
 COPY . ./
 
 # Install dependencies
-RUN go get -u github.com/golang/dep
-RUN go get -u github.com/derekparker/delve/cmd/dlv
+RUN go get -u github.com/golang/dep/...
+RUN go get -u github.com/derekparker/delve/cmd/dlv/...
 RUN dep ensure
 
 ENV PORT <%= port %>
